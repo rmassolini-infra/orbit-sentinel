@@ -295,50 +295,153 @@ export default function InSARPage() {
           </div>
         </div>
 
-        {/* Interferogram Visualization (simulated) */}
-        <div className="col-span-12 lg:col-span-6">
+        {/* Satellite Imagery Viewer */}
+        <div className="col-span-12">
           <div className="rounded-lg border border-border bg-card p-4">
-            <h3 className="font-display text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-              INTERFEROGRAMA — FASE DIFERENCIAL
-            </h3>
-            <div className="aspect-video bg-background rounded-lg overflow-hidden relative">
-              {/* Simulated interferogram with CSS gradients */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: `
-                    repeating-conic-gradient(
-                      from 0deg at 30% 40%,
-                      hsl(195 100% 50% / 0.6) 0deg,
-                      hsl(166 100% 50% / 0.6) 60deg,
-                      hsl(41 100% 47% / 0.6) 120deg,
-                      hsl(0 85% 65% / 0.6) 180deg,
-                      hsl(280 80% 60% / 0.6) 240deg,
-                      hsl(195 100% 50% / 0.6) 360deg
-                    ),
-                    repeating-conic-gradient(
-                      from 45deg at 70% 60%,
-                      hsl(195 100% 50% / 0.4) 0deg,
-                      hsl(166 100% 50% / 0.4) 90deg,
-                      hsl(41 100% 47% / 0.4) 180deg,
-                      hsl(195 100% 50% / 0.4) 360deg
-                    )
-                  `,
-                  filter: 'blur(8px)',
-                }}
-              />
-              <div className="absolute inset-0 bg-background/30" />
-              <div className="absolute bottom-2 left-2 px-2 py-1 bg-background/80 rounded text-xs font-mono">
-                Sentinel-1 IW — Par 01/03 ↔ 13/03/2026
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                VISUALIZAÇÃO DE IMAGENS SATELITAIS — CORREDOR LT
+              </h3>
+              <ToggleGroup type="single" value={imageMode} onValueChange={(v) => v && setImageMode(v as typeof imageMode)}>
+                {Object.entries(satelliteImagery).map(([key, config]) => (
+                  <ToggleGroupItem key={key} value={key} className="gap-1.5 text-xs">
+                    <config.icon className="h-3.5 w-3.5" />
+                    {config.label}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              {/* Primary Satellite Image */}
+              <div className="aspect-video bg-background rounded-lg overflow-hidden relative">
+                <img 
+                  src={`https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/8/156/121.jpg`}
+                  alt="Sentinel-2 optical"
+                  className={cn(
+                    "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+                    imageMode === 'optical' ? 'opacity-100' : 'opacity-0'
+                  )}
+                />
+                <img 
+                  src="https://eoimages.gsfc.nasa.gov/images/imagerecords/147000/147190/brazilfire_tmo_2020257_lrg.jpg"
+                  alt="MODIS Terra infrared"
+                  className={cn(
+                    "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+                    imageMode === 'infrared' ? 'opacity-100' : 'opacity-0'
+                  )}
+                />
+                {/* SAR view with interferogram overlay */}
+                <div className={cn(
+                  "absolute inset-0 transition-opacity duration-300",
+                  imageMode === 'sar' ? 'opacity-100' : 'opacity-0'
+                )}>
+                  <img 
+                    src="https://eoimages.gsfc.nasa.gov/images/imagerecords/150000/150608/brazil_vir_2022222_lrg.jpg"
+                    alt="Sentinel-1 SAR base"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ filter: 'grayscale(100%) contrast(1.2)' }}
+                  />
+                  {/* Interferogram phase overlay */}
+                  <div
+                    className="absolute inset-0 mix-blend-overlay"
+                    style={{
+                      background: `
+                        repeating-conic-gradient(
+                          from 0deg at 35% 45%,
+                          hsl(var(--primary) / 0.5) 0deg,
+                          hsl(var(--teal) / 0.5) 60deg,
+                          hsl(var(--accent) / 0.5) 120deg,
+                          hsl(var(--critical) / 0.5) 180deg,
+                          hsl(280 80% 60% / 0.5) 240deg,
+                          hsl(var(--primary) / 0.5) 360deg
+                        )
+                      `,
+                      filter: 'blur(12px)',
+                    }}
+                  />
+                </div>
+                <div className="absolute bottom-2 left-2 px-2 py-1 bg-background/90 rounded text-xs font-mono">
+                  {imageMode === 'sar' && 'Sentinel-1 IW SLC — Interferograma'}
+                  {imageMode === 'optical' && 'Sentinel-2 MSI — RGB True Color'}
+                  {imageMode === 'infrared' && 'MODIS Terra — Bandas 7-2-1'}
+                </div>
+                <div className="absolute top-2 right-2 px-2 py-1 bg-background/90 rounded text-xs font-mono flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                  Ao vivo
+                </div>
               </div>
-              <div className="absolute top-2 right-2 px-2 py-1 bg-background/80 rounded text-xs font-mono">
-                B⊥ = 87 m | Δt = 12 d
+              
+              {/* Secondary view - CHM or NDVI */}
+              <div className="aspect-video bg-background rounded-lg overflow-hidden relative">
+                <img 
+                  src="https://eoimages.gsfc.nasa.gov/images/imagerecords/146000/146942/brazil_vir_2020081_lrg.jpg"
+                  alt="NDVI vegetation"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ 
+                    filter: imageMode === 'infrared' 
+                      ? 'hue-rotate(90deg) saturate(1.5)' 
+                      : imageMode === 'sar'
+                        ? 'grayscale(100%) brightness(0.8) contrast(1.3)'
+                        : 'saturate(1.2)'
+                  }}
+                />
+                {/* CHM height overlay for SAR mode */}
+                {imageMode === 'sar' && (
+                  <div
+                    className="absolute inset-0 mix-blend-screen"
+                    style={{
+                      background: `
+                        linear-gradient(135deg, 
+                          hsl(var(--teal) / 0.3) 0%, 
+                          hsl(var(--accent) / 0.4) 40%, 
+                          hsl(var(--critical) / 0.3) 100%
+                        )
+                      `,
+                    }}
+                  />
+                )}
+                <div className="absolute bottom-2 left-2 px-2 py-1 bg-background/90 rounded text-xs font-mono">
+                  {imageMode === 'sar' && 'CHM Derivado — Altura de Dossel'}
+                  {imageMode === 'optical' && 'NDVI — Índice de Vegetação'}
+                  {imageMode === 'infrared' && 'LST — Temperatura de Superfície'}
+                </div>
+                <div className="absolute top-2 left-2 right-2 flex justify-end">
+                  <div className="px-2 py-1 bg-background/90 rounded text-xs font-mono">
+                    {imageMode === 'sar' && 'Res: 10m | Δh: 0-25m'}
+                    {imageMode === 'optical' && 'Res: 10m | NDVI: 0.2-0.9'}
+                    {imageMode === 'infrared' && 'Res: 1km | LST: 15-45°C'}
+                  </div>
+                </div>
+                {/* Color scale */}
+                <div className="absolute bottom-2 right-2 flex flex-col items-end gap-1">
+                  <div className="w-24 h-2 rounded" style={{ 
+                    background: imageMode === 'sar' 
+                      ? 'linear-gradient(to right, hsl(var(--teal)), hsl(var(--accent)), hsl(var(--critical)))' 
+                      : imageMode === 'optical'
+                        ? 'linear-gradient(to right, hsl(41 100% 47%), hsl(120 60% 40%), hsl(120 80% 25%))'
+                        : 'linear-gradient(to right, hsl(195 100% 50%), hsl(41 100% 47%), hsl(0 85% 65%))'
+                  }} />
+                  <span className="text-[9px] font-mono text-muted-foreground">
+                    {imageMode === 'sar' && '0m → 25m'}
+                    {imageMode === 'optical' && '0 → 1'}
+                    {imageMode === 'infrared' && '15°C → 45°C'}
+                  </span>
+                </div>
               </div>
             </div>
+            
             <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-              <span>Fase: -π → +π (1 franja ≈ 2.8 cm deslocamento LOS)</span>
-              <div className="flex gap-1">
-                <div className="w-12 h-2 rounded" style={{ background: 'linear-gradient(to right, hsl(195 100% 50%), hsl(166 100% 50%), hsl(41 100% 47%), hsl(0 85% 65%), hsl(280 80% 60%), hsl(195 100% 50%))' }} />
+              <span>
+                {imageMode === 'sar' && 'Fase: -π → +π (1 franja ≈ 2.8 cm deslocamento LOS) | Fonte: ESA Sentinel-1'}
+                {imageMode === 'optical' && 'Composição RGB verdadeira (B4-B3-B2) | Fonte: ESA Sentinel-2'}
+                {imageMode === 'infrared' && 'Bandas termais SWIR/TIR para detecção de anomalias | Fonte: NASA MODIS'}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono">13/03/2026 00:42 UTC</span>
+                <div className="w-16 h-2 rounded" style={{ 
+                  background: 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--teal)), hsl(var(--accent)), hsl(var(--critical)), hsl(280 80% 60%), hsl(var(--primary)))' 
+                }} />
               </div>
             </div>
           </div>
