@@ -273,7 +273,7 @@ export default function InSARPage() {
               </ResponsiveContainer>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Distribuição aproximadamente normal com viés de <span className="font-mono">{INSAR_METRICS.vies}m</span> pós-calibração
+              Distribuição aproximadamente normal com viés de <span className="font-mono">{metrics.bias}m</span> pós-calibração
             </p>
           </div>
         </div>
