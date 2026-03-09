@@ -4,72 +4,10 @@ import {
   AreaChart, Area, BarChart, Bar, Cell, ScatterChart, Scatter, ZAxis,
 } from 'recharts';
 import { MetricCard } from '@/components/MetricCard';
-import { INSAR_METRICS } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
-import { Activity, Layers, CheckCircle, AlertTriangle, Radio, Satellite, Eye, Radar } from 'lucide-react';
+import { Activity, Layers, CheckCircle, AlertTriangle, Radio, Satellite, Eye, Radar, Loader2 } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-
-// Pipeline stages
-const pipelineStages = [
-  { id: 1, name: 'Aquisição SAR', status: 'concluido' as const, time: '22:18 UTC', detail: 'Sentinel-1 IW SLC', icon: Radio },
-  { id: 2, name: 'Co-registro', status: 'concluido' as const, time: '22:34 UTC', detail: 'Precisão sub-pixel: 0.12 px', icon: Layers },
-  { id: 3, name: 'Interferograma', status: 'concluido' as const, time: '22:51 UTC', detail: 'Baseline perpendicular: 87 m', icon: Activity },
-  { id: 4, name: 'Filtragem Phase', status: 'concluido' as const, time: '23:08 UTC', detail: 'Goldstein α=0.7', icon: Activity },
-  { id: 5, name: 'Unwrapping', status: 'concluido' as const, time: '23:22 UTC', detail: 'SNAPHU MCF', icon: Activity },
-  { id: 6, name: 'Geocodificação', status: 'concluido' as const, time: '23:35 UTC', detail: 'SRTM 30m DEM ref.', icon: Layers },
-  { id: 7, name: 'Geração CHM', status: 'concluido' as const, time: '23:48 UTC', detail: 'DSM - DTM = CHM', icon: Layers },
-  { id: 8, name: 'Calibração', status: 'concluido' as const, time: '00:02 UTC', detail: 'LiDAR ground truth', icon: CheckCircle },
-];
-
-// Coherence histogram data
-const coherenceHistogram = Array.from({ length: 20 }, (_, i) => {
-  const coh = i * 0.05;
-  const count = coh < 0.3
-    ? Math.random() * 200 + 50
-    : coh < 0.6
-      ? Math.random() * 800 + 400
-      : Math.random() * 1500 + 800;
-  return { coherence: coh.toFixed(2), count: Math.round(count) };
-});
-
-// Baseline history
-const baselineHistory = [
-  { par: 'Jan/25', perpendicular: 45, temporal: 12 },
-  { par: 'Feb/25', perpendicular: 78, temporal: 12 },
-  { par: 'Mar/25', perpendicular: 112, temporal: 12 },
-  { par: 'Apr/25', perpendicular: 65, temporal: 12 },
-  { par: 'May/25', perpendicular: 92, temporal: 12 },
-  { par: 'Jun/25', perpendicular: 34, temporal: 12 },
-  { par: 'Jul/25', perpendicular: 56, temporal: 12 },
-  { par: 'Aug/25', perpendicular: 88, temporal: 12 },
-  { par: 'Sep/25', perpendicular: 101, temporal: 12 },
-  { par: 'Oct/25', perpendicular: 73, temporal: 12 },
-  { par: 'Nov/25', perpendicular: 95, temporal: 12 },
-  { par: 'Dec/25', perpendicular: 60, temporal: 12 },
-  { par: 'Jan/26', perpendicular: 82, temporal: 12 },
-  { par: 'Feb/26', perpendicular: 67, temporal: 12 },
-  { par: 'Mar/26', perpendicular: 87, temporal: 12 },
-];
-
-// CHM validation scatter
-const chmValidation = Array.from({ length: 40 }, (_, i) => {
-  const lidar = Math.random() * 20 + 2;
-  const insar = lidar + (Math.random() - 0.5) * 4 + INSAR_METRICS.vies;
-  return { lidar: Math.round(lidar * 10) / 10, insar: Math.round(insar * 10) / 10 };
-});
-
-// CHM error distribution
-const chmErrorDist = Array.from({ length: 15 }, (_, i) => {
-  const error = (i - 7) * 0.5;
-  const count = Math.round(Math.exp(-error * error / 3) * 500 + Math.random() * 30);
-  return { error: error.toFixed(1), count };
-});
-
-// Phase residual time series
-const phaseResiduals = Array.from({ length: 30 }, (_, i) => ({
-  pixel: i * 100,
-  residual: (Math.random() - 0.5) * 0.8,
-}));
+import { useInSARProcessing } from '@/hooks/useGrafterData';
 
 const tooltipStyle = {
   backgroundColor: 'hsl(215 25% 11%)',
@@ -82,32 +20,77 @@ const tooltipStyle = {
 const axisTickStyle = { fill: 'hsl(214 14% 58%)', fontSize: 10, fontFamily: 'JetBrains Mono' };
 const gridStroke = 'hsl(215 14% 25%)';
 
-// Satellite imagery sources - real tiles from ESA/NASA
+// Satellite imagery sources
 const satelliteImagery = {
-  sar: {
-    label: 'SAR',
-    icon: Radar,
-    // Sentinel-1 SAR imagery (simulated with real satellite base)
-    url: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg',
-    overlay: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_Bands367/default/2024-01-15/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg',
-  },
-  optical: {
-    label: 'Óptico',
-    icon: Eye,
-    // Sentinel-2 optical imagery
-    url: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg',
-  },
-  infrared: {
-    label: 'Infravermelho',
-    icon: Satellite,
-    // MODIS infrared bands
-    url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_Bands721/default/2024-01-15/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg',
-  },
+  sar: { label: 'SAR', icon: Radar },
+  optical: { label: 'Óptico', icon: Eye },
+  infrared: { label: 'Infravermelho', icon: Satellite },
+};
+
+// Baseline history (static for now, could be from API)
+const baselineHistory = [
+  { par: 'Jan/25', perpendicular: 45, temporal: 12 },
+  { par: 'Fev/25', perpendicular: 78, temporal: 12 },
+  { par: 'Mar/25', perpendicular: 112, temporal: 12 },
+  { par: 'Abr/25', perpendicular: 65, temporal: 12 },
+  { par: 'Mai/25', perpendicular: 92, temporal: 12 },
+  { par: 'Jun/25', perpendicular: 34, temporal: 12 },
+  { par: 'Jul/25', perpendicular: 56, temporal: 12 },
+  { par: 'Ago/25', perpendicular: 88, temporal: 12 },
+  { par: 'Set/25', perpendicular: 101, temporal: 12 },
+  { par: 'Out/25', perpendicular: 73, temporal: 12 },
+  { par: 'Nov/25', perpendicular: 95, temporal: 12 },
+  { par: 'Dez/25', perpendicular: 60, temporal: 12 },
+  { par: 'Jan/26', perpendicular: 82, temporal: 12 },
+  { par: 'Fev/26', perpendicular: 67, temporal: 12 },
+  { par: 'Mar/26', perpendicular: 87, temporal: 12 },
+];
+
+// CHM error distribution (static)
+const chmErrorDist = Array.from({ length: 15 }, (_, i) => {
+  const error = (i - 7) * 0.5;
+  const count = Math.round(Math.exp(-error * error / 3) * 500 + Math.random() * 30);
+  return { error: error.toFixed(1), count };
+});
+
+const stageIcons: Record<string, typeof Radio> = {
+  'Aquisição SAR': Radio,
+  'Co-registro': Layers,
+  'Interferograma': Activity,
+  'Filtragem Phase': Activity,
+  'Unwrapping': Activity,
+  'Geocodificação': Layers,
+  'Geração CHM': Layers,
+  'Calibração': CheckCircle,
 };
 
 export default function InSARPage() {
   const [selectedStage, setSelectedStage] = useState(3);
   const [imageMode, setImageMode] = useState<'sar' | 'optical' | 'infrared'>('sar');
+  
+  // Fetch real InSAR data from API
+  const { data: insarData, isLoading, error } = useInSARProcessing();
+
+  // Use API data or fallbacks
+  const coherenceHistogram = insarData?.coherence?.histogram || [];
+  const phaseResiduals = insarData?.phaseResiduals || [];
+  const chmValidation = insarData?.chmValidation || [];
+  const pipelineStages = insarData?.pipelineStages || [];
+  const metrics = insarData?.qualityMetrics || { mae: 1.7, rmse: 2.1, bias: -0.6, rSquared: 0.89 };
+  const coherence = insarData?.coherence || { mean: 0.72, std: 0.15 };
+  const baselines = insarData?.baselines || { perpendicular: 87, temporal: 12, ambiguityHeight: 102 };
+  const processingParams = insarData?.processingParams || {};
+  const chmDerived = insarData?.chmDerived || 12.4;
+  const unwrappingQuality = insarData?.unwrappingQuality || "GOOD";
+
+  if (isLoading) {
+    return (
+      <div className="h-full p-4 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Processando dados InSAR...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full p-4 space-y-4 overflow-y-auto">
@@ -115,10 +98,10 @@ export default function InSARPage() {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-5 gap-4">
-        <MetricCard label="MAE" value={INSAR_METRICS.mae} unit="m" status="ok" subtext="Mean Absolute Error" />
-        <MetricCard label="RMSE" value={INSAR_METRICS.rmse} unit="m" status="ok" subtext="Root Mean Square Error" />
-        <MetricCard label="Viés" value={INSAR_METRICS.vies} unit="m" status="ok" subtext="Pós-calibração LiDAR" />
-        <MetricCard label="Coerência Média" value="0.72" status="ok" subtext="Acima do limiar 0.4" />
+        <MetricCard label="MAE" value={metrics.mae} unit="m" status="ok" subtext="Mean Absolute Error" />
+        <MetricCard label="RMSE" value={metrics.rmse} unit="m" status="ok" subtext="Root Mean Square Error" />
+        <MetricCard label="Viés" value={metrics.bias} unit="m" status="ok" subtext="Pós-calibração LiDAR" />
+        <MetricCard label="Coerência Média" value={coherence.mean.toFixed(2)} status={coherence.mean > 0.6 ? "ok" : "warning"} subtext="Acima do limiar 0.4" />
         <MetricCard label="Pixels Processados" value="84.7k" status="ok" subtext="Corredor completo" />
       </div>
 
@@ -128,7 +111,9 @@ export default function InSARPage() {
           PIPELINE DE PROCESSAMENTO — PAR 13/03/2026
         </h3>
         <div className="flex items-center gap-1 overflow-x-auto pb-2">
-          {pipelineStages.map((stage, idx) => (
+          {pipelineStages.map((stage: any, idx: number) => {
+            const StageIcon = stageIcons[stage.name] || Activity;
+            return (
             <div key={stage.id} className="flex items-center">
               <button
                 onClick={() => setSelectedStage(stage.id)}
@@ -143,7 +128,7 @@ export default function InSARPage() {
                   'flex items-center justify-center w-8 h-8 rounded-full',
                   stage.status === 'concluido' ? 'bg-success/20' : 'bg-muted'
                 )}>
-                  <stage.icon className={cn('h-4 w-4', stage.status === 'concluido' ? 'text-success' : 'text-muted-foreground')} />
+                  <StageIcon className={cn('h-4 w-4', stage.status === 'concluido' ? 'text-success' : 'text-muted-foreground')} />
                 </div>
                 <span className="text-xs font-semibold text-center leading-tight">{stage.name}</span>
                 <span className="text-[10px] font-mono text-muted-foreground">{stage.time}</span>
@@ -152,16 +137,19 @@ export default function InSARPage() {
                 <div className="w-4 h-px bg-success mx-0.5 shrink-0" />
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
         {/* Stage Detail */}
+        {pipelineStages.length > 0 && (
         <div className="mt-3 p-3 bg-muted rounded-lg flex items-center gap-3 text-sm">
           <CheckCircle className="h-4 w-4 text-success shrink-0" />
           <span className="text-muted-foreground">
-            <span className="font-semibold text-foreground">{pipelineStages[selectedStage - 1].name}</span>
-            {' — '}{pipelineStages[selectedStage - 1].detail}
+            <span className="font-semibold text-foreground">{pipelineStages[Math.min(selectedStage - 1, pipelineStages.length - 1)]?.name}</span>
+            {' — '}{pipelineStages[Math.min(selectedStage - 1, pipelineStages.length - 1)]?.detail}
           </span>
         </div>
+        )}
       </div>
 
       <div className="grid grid-cols-12 gap-4">
@@ -257,9 +245,9 @@ export default function InSARPage() {
             </div>
             <div className="flex items-center justify-between mt-2 text-xs">
               <span className="text-muted-foreground">
-                R² = <span className="font-mono text-foreground">0.89</span> &nbsp;|&nbsp;
-                MAE = <span className="font-mono text-foreground">{INSAR_METRICS.mae}m</span> &nbsp;|&nbsp;
-                Viés = <span className="font-mono text-foreground">{INSAR_METRICS.vies}m</span>
+                R² = <span className="font-mono text-foreground">{metrics.rSquared}</span> &nbsp;|&nbsp;
+                MAE = <span className="font-mono text-foreground">{metrics.mae}m</span> &nbsp;|&nbsp;
+                Viés = <span className="font-mono text-foreground">{metrics.bias}m</span>
               </span>
               <span className="text-success">✓ Dentro do esperado</span>
             </div>
@@ -290,7 +278,7 @@ export default function InSARPage() {
               </ResponsiveContainer>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Distribuição aproximadamente normal com viés de <span className="font-mono">{INSAR_METRICS.vies}m</span> pós-calibração
+              Distribuição aproximadamente normal com viés de <span className="font-mono">{metrics.bias}m</span> pós-calibração
             </p>
           </div>
         </div>

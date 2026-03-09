@@ -1,0 +1,13 @@
+project_id = "dfixxoesklnvjyyuoopi"
+
+[functions.satellite-imagery]
+verify_jwt = false
+
+[functions.insar-processing]
+verify_jwt = false
+
+[functions.vegetation-analysis]
+verify_jwt = false
+
+[functions.segments-api]
+verify_jwt = false
