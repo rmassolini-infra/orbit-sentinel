@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
 import MapaTTC from "./pages/MapaTTC";
 import AlertasPage from "./pages/AlertasPage";
+import VegetacaoPage from "./pages/VegetacaoPage";
 import SeriesTemporaisPage from "./pages/SeriesTemporaisPage";
 import SRGanPage from "./pages/SRGanPage";
 import OrdensServicoPage from "./pages/OrdensServicoPage";
