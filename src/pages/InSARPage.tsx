@@ -240,9 +240,9 @@ export default function InSARPage() {
             </div>
             <div className="flex items-center justify-between mt-2 text-xs">
               <span className="text-muted-foreground">
-                R² = <span className="font-mono text-foreground">0.89</span> &nbsp;|&nbsp;
-                MAE = <span className="font-mono text-foreground">{INSAR_METRICS.mae}m</span> &nbsp;|&nbsp;
-                Viés = <span className="font-mono text-foreground">{INSAR_METRICS.vies}m</span>
+                R² = <span className="font-mono text-foreground">{metrics.rSquared}</span> &nbsp;|&nbsp;
+                MAE = <span className="font-mono text-foreground">{metrics.mae}m</span> &nbsp;|&nbsp;
+                Viés = <span className="font-mono text-foreground">{metrics.bias}m</span>
               </span>
               <span className="text-success">✓ Dentro do esperado</span>
             </div>
