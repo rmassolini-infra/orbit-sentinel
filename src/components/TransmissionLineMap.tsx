@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { SEGMENTOS_MAPA, ALERTAS, type Segmento, type Alerta } from '@/lib/mockData';
 import { TtcBadge } from './TtcBadge';
 import { cn } from '@/lib/utils';
-import { useSatelliteTiles, type SatelliteLayer } from '@/hooks/useSatelliteTiles';
+import { useSatelliteTiles, type SatelliteLayer, type TileData } from '@/hooks/useSatelliteTiles';
 import { Loader2, Satellite, AlertTriangle } from 'lucide-react';
 
 interface TransmissionLineMapProps {
