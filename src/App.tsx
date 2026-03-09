@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
 import MapaTTC from "./pages/MapaTTC";
 import AlertasPage from "./pages/AlertasPage";
+import VegetacaoPage from "./pages/VegetacaoPage";
 import SeriesTemporaisPage from "./pages/SeriesTemporaisPage";
 import SRGanPage from "./pages/SRGanPage";
 import OrdensServicoPage from "./pages/OrdensServicoPage";
@@ -24,7 +25,7 @@ const App = () => (
           <Route element={<AppLayout />}>
             <Route path="/" element={<MapaTTC />} />
             <Route path="/alertas" element={<AlertasPage />} />
-            <Route path="/vegetacao" element={<PlaceholderPage title="Análise de Vegetação" />} />
+            <Route path="/vegetacao" element={<VegetacaoPage />} />
             <Route path="/series-temporais" element={<SeriesTemporaisPage />} />
             <Route path="/sr-gan" element={<SRGanPage />} />
             <Route path="/insar" element={<PlaceholderPage title="Pipeline InSAR" />} />
