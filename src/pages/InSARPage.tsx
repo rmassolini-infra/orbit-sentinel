@@ -6,7 +6,8 @@ import {
 import { MetricCard } from '@/components/MetricCard';
 import { INSAR_METRICS } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
-import { Activity, Layers, CheckCircle, AlertTriangle, Radio } from 'lucide-react';
+import { Activity, Layers, CheckCircle, AlertTriangle, Radio, Satellite, Eye, Radar } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 // Pipeline stages
 const pipelineStages = [
