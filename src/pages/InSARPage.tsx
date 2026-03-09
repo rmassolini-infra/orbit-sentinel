@@ -111,7 +111,9 @@ export default function InSARPage() {
           PIPELINE DE PROCESSAMENTO — PAR 13/03/2026
         </h3>
         <div className="flex items-center gap-1 overflow-x-auto pb-2">
-          {pipelineStages.map((stage, idx) => (
+          {pipelineStages.map((stage: any, idx: number) => {
+            const StageIcon = stageIcons[stage.name] || Activity;
+            return (
             <div key={stage.id} className="flex items-center">
               <button
                 onClick={() => setSelectedStage(stage.id)}
@@ -126,7 +128,7 @@ export default function InSARPage() {
                   'flex items-center justify-center w-8 h-8 rounded-full',
                   stage.status === 'concluido' ? 'bg-success/20' : 'bg-muted'
                 )}>
-                  <stage.icon className={cn('h-4 w-4', stage.status === 'concluido' ? 'text-success' : 'text-muted-foreground')} />
+                  <StageIcon className={cn('h-4 w-4', stage.status === 'concluido' ? 'text-success' : 'text-muted-foreground')} />
                 </div>
                 <span className="text-xs font-semibold text-center leading-tight">{stage.name}</span>
                 <span className="text-[10px] font-mono text-muted-foreground">{stage.time}</span>
@@ -135,16 +137,19 @@ export default function InSARPage() {
                 <div className="w-4 h-px bg-success mx-0.5 shrink-0" />
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
         {/* Stage Detail */}
+        {pipelineStages.length > 0 && (
         <div className="mt-3 p-3 bg-muted rounded-lg flex items-center gap-3 text-sm">
           <CheckCircle className="h-4 w-4 text-success shrink-0" />
           <span className="text-muted-foreground">
-            <span className="font-semibold text-foreground">{pipelineStages[selectedStage - 1].name}</span>
-            {' — '}{pipelineStages[selectedStage - 1].detail}
+            <span className="font-semibold text-foreground">{pipelineStages[Math.min(selectedStage - 1, pipelineStages.length - 1)]?.name}</span>
+            {' — '}{pipelineStages[Math.min(selectedStage - 1, pipelineStages.length - 1)]?.detail}
           </span>
         </div>
+        )}
       </div>
 
       <div className="grid grid-cols-12 gap-4">
