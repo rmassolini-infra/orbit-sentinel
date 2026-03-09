@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type SatelliteLayer = "TTC" | "CHM" | "SAR" | "NDVI" | "Óptico";
 
-interface TileData {
+export interface TileData {
   tileUrl: string;
   tiles?: string[];
   source: string;
   imageType: string;
+  date?: string;
+  layer?: string;
   metadata: Record<string, any>;
   image?: string; // base64 for Sentinel Hub
 }
