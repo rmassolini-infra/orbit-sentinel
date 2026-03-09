@@ -315,49 +315,54 @@ export default function InSARPage() {
             <div className="grid grid-cols-2 gap-4">
               {/* Primary Satellite Image */}
               <div className="aspect-video bg-background rounded-lg overflow-hidden relative">
+                {/* Optical view - Sentinel-2 tiles */}
                 <img 
-                  src={`https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/8/156/121.jpg`}
+                  src="https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/8/125/85"
                   alt="Sentinel-2 optical"
                   className={cn(
                     "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
                     imageMode === 'optical' ? 'opacity-100' : 'opacity-0'
                   )}
                 />
-                <img 
-                  src="https://eoimages.gsfc.nasa.gov/images/imagerecords/147000/147190/brazilfire_tmo_2020257_lrg.jpg"
-                  alt="MODIS Terra infrared"
-                  className={cn(
-                    "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
-                    imageMode === 'infrared' ? 'opacity-100' : 'opacity-0'
-                  )}
-                />
+                {/* Infrared view */}
+                <div className={cn(
+                  "absolute inset-0 transition-opacity duration-300",
+                  imageMode === 'infrared' ? 'opacity-100' : 'opacity-0'
+                )}>
+                  <img 
+                    src="https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/8/125/85"
+                    alt="MODIS Terra infrared"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ filter: 'hue-rotate(220deg) saturate(1.8) brightness(0.9)' }}
+                  />
+                </div>
                 {/* SAR view with interferogram overlay */}
                 <div className={cn(
                   "absolute inset-0 transition-opacity duration-300",
                   imageMode === 'sar' ? 'opacity-100' : 'opacity-0'
                 )}>
                   <img 
-                    src="https://eoimages.gsfc.nasa.gov/images/imagerecords/150000/150608/brazil_vir_2022222_lrg.jpg"
+                    src="https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/8/125/85"
                     alt="Sentinel-1 SAR base"
                     className="absolute inset-0 w-full h-full object-cover"
-                    style={{ filter: 'grayscale(100%) contrast(1.2)' }}
+                    style={{ filter: 'grayscale(100%) contrast(1.3) brightness(0.85)' }}
                   />
                   {/* Interferogram phase overlay */}
                   <div
-                    className="absolute inset-0 mix-blend-overlay"
+                    className="absolute inset-0 mix-blend-screen"
                     style={{
                       background: `
                         repeating-conic-gradient(
                           from 0deg at 35% 45%,
-                          hsl(var(--primary) / 0.5) 0deg,
-                          hsl(var(--teal) / 0.5) 60deg,
-                          hsl(var(--accent) / 0.5) 120deg,
-                          hsl(var(--critical) / 0.5) 180deg,
-                          hsl(280 80% 60% / 0.5) 240deg,
-                          hsl(var(--primary) / 0.5) 360deg
+                          hsl(195 100% 50% / 0.4) 0deg,
+                          hsl(166 100% 50% / 0.4) 60deg,
+                          hsl(41 100% 47% / 0.4) 120deg,
+                          hsl(0 85% 65% / 0.4) 180deg,
+                          hsl(280 80% 60% / 0.4) 240deg,
+                          hsl(195 100% 50% / 0.4) 360deg
                         )
                       `,
-                      filter: 'blur(12px)',
+                      filter: 'blur(15px)',
                     }}
                   />
                 </div>
@@ -375,32 +380,28 @@ export default function InSARPage() {
               {/* Secondary view - CHM or NDVI */}
               <div className="aspect-video bg-background rounded-lg overflow-hidden relative">
                 <img 
-                  src="https://eoimages.gsfc.nasa.gov/images/imagerecords/146000/146942/brazil_vir_2020081_lrg.jpg"
-                  alt="NDVI vegetation"
+                  src="https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/8/125/86"
+                  alt="Secondary satellite view"
                   className="absolute inset-0 w-full h-full object-cover"
                   style={{ 
                     filter: imageMode === 'infrared' 
-                      ? 'hue-rotate(90deg) saturate(1.5)' 
+                      ? 'hue-rotate(280deg) saturate(1.5) contrast(1.1)' 
                       : imageMode === 'sar'
-                        ? 'grayscale(100%) brightness(0.8) contrast(1.3)'
-                        : 'saturate(1.2)'
+                        ? 'grayscale(100%) brightness(0.7) contrast(1.4)'
+                        : 'hue-rotate(60deg) saturate(1.3)'
                   }}
                 />
-                {/* CHM height overlay for SAR mode */}
-                {imageMode === 'sar' && (
-                  <div
-                    className="absolute inset-0 mix-blend-screen"
-                    style={{
-                      background: `
-                        linear-gradient(135deg, 
-                          hsl(var(--teal) / 0.3) 0%, 
-                          hsl(var(--accent) / 0.4) 40%, 
-                          hsl(var(--critical) / 0.3) 100%
-                        )
-                      `,
-                    }}
-                  />
-                )}
+                {/* CHM/NDVI/LST overlay gradient */}
+                <div
+                  className="absolute inset-0 mix-blend-overlay"
+                  style={{
+                    background: imageMode === 'sar'
+                      ? 'linear-gradient(135deg, hsl(166 100% 50% / 0.4) 0%, hsl(41 100% 47% / 0.5) 50%, hsl(0 85% 65% / 0.4) 100%)'
+                      : imageMode === 'optical'
+                        ? 'linear-gradient(135deg, hsl(41 100% 47% / 0.3) 0%, hsl(120 60% 40% / 0.4) 50%, hsl(120 80% 25% / 0.3) 100%)'
+                        : 'linear-gradient(135deg, hsl(195 100% 50% / 0.3) 0%, hsl(41 100% 47% / 0.4) 50%, hsl(0 85% 65% / 0.4) 100%)'
+                  }}
+                />
                 <div className="absolute bottom-2 left-2 px-2 py-1 bg-background/90 rounded text-xs font-mono">
                   {imageMode === 'sar' && 'CHM Derivado — Altura de Dossel'}
                   {imageMode === 'optical' && 'NDVI — Índice de Vegetação'}
@@ -417,7 +418,7 @@ export default function InSARPage() {
                 <div className="absolute bottom-2 right-2 flex flex-col items-end gap-1">
                   <div className="w-24 h-2 rounded" style={{ 
                     background: imageMode === 'sar' 
-                      ? 'linear-gradient(to right, hsl(var(--teal)), hsl(var(--accent)), hsl(var(--critical)))' 
+                      ? 'linear-gradient(to right, hsl(166 100% 50%), hsl(41 100% 47%), hsl(0 85% 65%))' 
                       : imageMode === 'optical'
                         ? 'linear-gradient(to right, hsl(41 100% 47%), hsl(120 60% 40%), hsl(120 80% 25%))'
                         : 'linear-gradient(to right, hsl(195 100% 50%), hsl(41 100% 47%), hsl(0 85% 65%))'
