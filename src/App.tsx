@@ -10,6 +10,7 @@ import VegetacaoPage from "./pages/VegetacaoPage";
 import SeriesTemporaisPage from "./pages/SeriesTemporaisPage";
 import SRGanPage from "./pages/SRGanPage";
 import OrdensServicoPage from "./pages/OrdensServicoPage";
+import InSARPage from "./pages/InSARPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
