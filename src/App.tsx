@@ -11,7 +11,8 @@ import SeriesTemporaisPage from "./pages/SeriesTemporaisPage";
 import SRGanPage from "./pages/SRGanPage";
 import OrdensServicoPage from "./pages/OrdensServicoPage";
 import InSARPage from "./pages/InSARPage";
-import PlaceholderPage from "./pages/PlaceholderPage";
+import RelatoriosPage from "./pages/RelatoriosPage";
+import ConfiguracoesPage from "./pages/ConfiguracoesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,8 +32,8 @@ const App = () => (
             <Route path="/sr-gan" element={<SRGanPage />} />
             <Route path="/insar" element={<InSARPage />} />
             <Route path="/ordens-servico" element={<OrdensServicoPage />} />
-            <Route path="/relatorios" element={<PlaceholderPage title="Relatórios" />} />
-            <Route path="/configuracoes" element={<PlaceholderPage title="Configurações" />} />
+            <Route path="/relatorios" element={<RelatoriosPage />} />
+            <Route path="/configuracoes" element={<ConfiguracoesPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
