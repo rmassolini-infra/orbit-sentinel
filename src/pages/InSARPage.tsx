@@ -83,16 +83,25 @@ export default function InSARPage() {
   const chmDerived = insarData?.chmDerived || 12.4;
   const unwrappingQuality = insarData?.unwrappingQuality || "GOOD";
 
+  if (isLoading) {
+    return (
+      <div className="h-full p-4 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Processando dados InSAR...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full p-4 space-y-4 overflow-y-auto">
       <h1 className="font-display text-xl font-semibold">Pipeline InSAR</h1>
 
       {/* Metrics Row */}
       <div className="grid grid-cols-5 gap-4">
-        <MetricCard label="MAE" value={INSAR_METRICS.mae} unit="m" status="ok" subtext="Mean Absolute Error" />
-        <MetricCard label="RMSE" value={INSAR_METRICS.rmse} unit="m" status="ok" subtext="Root Mean Square Error" />
-        <MetricCard label="Viés" value={INSAR_METRICS.vies} unit="m" status="ok" subtext="Pós-calibração LiDAR" />
-        <MetricCard label="Coerência Média" value="0.72" status="ok" subtext="Acima do limiar 0.4" />
+        <MetricCard label="MAE" value={metrics.mae} unit="m" status="ok" subtext="Mean Absolute Error" />
+        <MetricCard label="RMSE" value={metrics.rmse} unit="m" status="ok" subtext="Root Mean Square Error" />
+        <MetricCard label="Viés" value={metrics.bias} unit="m" status="ok" subtext="Pós-calibração LiDAR" />
+        <MetricCard label="Coerência Média" value={coherence.mean.toFixed(2)} status={coherence.mean > 0.6 ? "ok" : "warning"} subtext="Acima do limiar 0.4" />
         <MetricCard label="Pixels Processados" value="84.7k" status="ok" subtext="Corredor completo" />
       </div>
 
