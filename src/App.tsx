@@ -10,6 +10,7 @@ import VegetacaoPage from "./pages/VegetacaoPage";
 import SeriesTemporaisPage from "./pages/SeriesTemporaisPage";
 import SRGanPage from "./pages/SRGanPage";
 import OrdensServicoPage from "./pages/OrdensServicoPage";
+import InSARPage from "./pages/InSARPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -28,7 +29,7 @@ const App = () => (
             <Route path="/vegetacao" element={<VegetacaoPage />} />
             <Route path="/series-temporais" element={<SeriesTemporaisPage />} />
             <Route path="/sr-gan" element={<SRGanPage />} />
-            <Route path="/insar" element={<PlaceholderPage title="Pipeline InSAR" />} />
+            <Route path="/insar" element={<InSARPage />} />
             <Route path="/ordens-servico" element={<OrdensServicoPage />} />
             <Route path="/relatorios" element={<PlaceholderPage title="Relatórios" />} />
             <Route path="/configuracoes" element={<PlaceholderPage title="Configurações" />} />
