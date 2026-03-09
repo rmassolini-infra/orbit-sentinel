@@ -82,8 +82,32 @@ const tooltipStyle = {
 const axisTickStyle = { fill: 'hsl(214 14% 58%)', fontSize: 10, fontFamily: 'JetBrains Mono' };
 const gridStroke = 'hsl(215 14% 25%)';
 
+// Satellite imagery sources - real tiles from ESA/NASA
+const satelliteImagery = {
+  sar: {
+    label: 'SAR',
+    icon: Radar,
+    // Sentinel-1 SAR imagery (simulated with real satellite base)
+    url: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg',
+    overlay: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_Bands367/default/2024-01-15/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg',
+  },
+  optical: {
+    label: 'Óptico',
+    icon: Eye,
+    // Sentinel-2 optical imagery
+    url: 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg',
+  },
+  infrared: {
+    label: 'Infravermelho',
+    icon: Satellite,
+    // MODIS infrared bands
+    url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_Bands721/default/2024-01-15/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg',
+  },
+};
+
 export default function InSARPage() {
   const [selectedStage, setSelectedStage] = useState(3);
+  const [imageMode, setImageMode] = useState<'sar' | 'optical' | 'infrared'>('sar');
 
   return (
     <div className="h-full p-4 space-y-4 overflow-y-auto">
