@@ -1,5 +1,8 @@
-import { useState, useMemo } from 'react';
-import { SEGMENTOS_MAPA, type Segmento, type Alerta, ALERTAS } from '@/lib/mockData';
+import { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Polyline, Popup, useMap } from 'react-leaflet';
+import { LatLngExpression, LatLngBoundsExpression } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { SEGMENTOS_MAPA, ALERTAS, type Segmento, type Alerta } from '@/lib/mockData';
 import { TtcBadge } from './TtcBadge';
 import { cn } from '@/lib/utils';
 
@@ -9,23 +12,72 @@ interface TransmissionLineMapProps {
 }
 
 const riskColors = {
-  CRITICO: 'hsl(0 85% 65%)',
-  ALTO: 'hsl(41 100% 47%)',
-  MEDIO: 'hsl(195 100% 50%)',
-  BAIXO: 'hsl(166 100% 50%)',
+  CRITICO: '#FF4C4C',
+  ALTO: '#F0A500',
+  MEDIO: '#00BFFF',
+  BAIXO: '#00FFD1',
 };
 
-export function TransmissionLineMap({ selectedSegment, onSelectSegment }: TransmissionLineMapProps) {
-  const [hoveredSegment, setHoveredSegment] = useState<Segmento | null>(null);
-  const [activeLayer, setActiveLayer] = useState<'TTC' | 'CHM' | 'SAR' | 'Óptico'>('TTC');
+// Simulated transmission line coordinates (Minas Gerais region - Cerrado corridor)
+// Creating a realistic path from south to north in MG
+const generateLineCoordinates = (): { start: [number, number]; end: [number, number] } => {
+  // Starting point near Uberlândia, MG
+  const start: [number, number] = [-18.9186, -48.2772];
+  // Ending point near Montes Claros, MG
+  const end: [number, number] = [-16.7350, -43.8617];
+  return { start, end };
+};
 
+const { start, end } = generateLineCoordinates();
+
+// Interpolate coordinates for each segment based on km
+const getSegmentCoordinates = (km_ini: number, km_fim: number): LatLngExpression[] => {
   const totalKm = 847;
-  const mapWidth = 100; // percentage
+  const latDiff = end[0] - start[0];
+  const lngDiff = end[1] - start[1];
   
-  const getSegmentX = (km: number) => (km / totalKm) * mapWidth;
+  const startLat = start[0] + (km_ini / totalKm) * latDiff;
+  const startLng = start[1] + (km_ini / totalKm) * lngDiff;
+  const endLat = start[0] + (km_fim / totalKm) * latDiff;
+  const endLng = start[1] + (km_fim / totalKm) * lngDiff;
+  
+  // Add some natural curve variation
+  const midLat = (startLat + endLat) / 2 + (Math.sin(km_ini * 0.1) * 0.05);
+  const midLng = (startLng + endLng) / 2 + (Math.cos(km_ini * 0.1) * 0.05);
+  
+  return [
+    [startLat, startLng],
+    [midLat, midLng],
+    [endLat, endLng],
+  ];
+};
+
+// Component to fit bounds when needed
+function FitBounds({ bounds }: { bounds: LatLngBoundsExpression }) {
+  const map = useMap();
+  useEffect(() => {
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }, [map, bounds]);
+  return null;
+}
+
+export function TransmissionLineMap({ selectedSegment, onSelectSegment }: TransmissionLineMapProps) {
+  const [activeLayer, setActiveLayer] = useState<'TTC' | 'CHM' | 'SAR' | 'Óptico'>('TTC');
+  
+  const center: LatLngExpression = [
+    (start[0] + end[0]) / 2,
+    (start[1] + end[1]) / 2,
+  ];
+
+  const bounds: LatLngBoundsExpression = [start, end];
 
   const findAlertaForSegment = (seg: Segmento): Alerta | null => {
     return ALERTAS.find(a => a.km_ini === seg.km_ini && a.km_fim === seg.km_fim) || null;
+  };
+
+  const getSegmentWeight = (seg: Segmento) => {
+    const alerta = findAlertaForSegment(seg);
+    return selectedSegment?.km_ini === seg.km_ini ? 6 : 4;
   };
 
   return (
@@ -53,142 +105,85 @@ export function TransmissionLineMap({ selectedSegment, onSelectSegment }: Transm
         </div>
       </div>
 
-      {/* SVG Map */}
-      <div className="flex-1 relative bg-background rounded-lg overflow-hidden min-h-[300px]">
-        {/* Dark background with grid */}
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 60" preserveAspectRatio="none">
-          {/* Grid lines */}
-          {Array.from({ length: 9 }, (_, i) => (
-            <line
-              key={`h-${i}`}
-              x1="0"
-              y1={i * 7.5}
-              x2="100"
-              y2={i * 7.5}
-              stroke="hsl(215 14% 20%)"
-              strokeWidth="0.1"
-            />
-          ))}
-          {Array.from({ length: 10 }, (_, i) => (
-            <line
-              key={`v-${i}`}
-              x1={i * 11.11}
-              y1="0"
-              x2={i * 11.11}
-              y2="60"
-              stroke="hsl(215 14% 20%)"
-              strokeWidth="0.1"
-            />
-          ))}
-        </svg>
-
-        {/* Transmission Line SVG */}
-        <svg 
-          className="absolute inset-0 w-full h-full" 
-          viewBox="0 0 100 60"
-          preserveAspectRatio="xMidYMid meet"
+      {/* Leaflet Map */}
+      <div className="flex-1 relative rounded-lg overflow-hidden min-h-[300px]">
+        <MapContainer
+          center={center}
+          zoom={7}
+          style={{ height: '100%', width: '100%', background: '#0D1117' }}
+          zoomControl={true}
         >
-          {/* Main line background */}
-          <line
-            x1="5"
-            y1="30"
-            x2="95"
-            y2="30"
-            stroke="hsl(215 14% 30%)"
-            strokeWidth="1"
+          <TileLayer
+            attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
+            url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
           />
+          
+          <FitBounds bounds={bounds} />
 
-          {/* Segments */}
+          {/* Render each segment as a polyline */}
           {SEGMENTOS_MAPA.map((seg) => {
-            const x1 = 5 + getSegmentX(seg.km_ini) * 0.9;
-            const x2 = 5 + getSegmentX(seg.km_fim) * 0.9;
+            const coordinates = getSegmentCoordinates(seg.km_ini, seg.km_fim);
             const isSelected = selectedSegment?.km_ini === seg.km_ini;
-            const isHovered = hoveredSegment?.id === seg.id;
+            const alerta = findAlertaForSegment(seg);
 
             return (
-              <g key={seg.id}>
-                <line
-                  x1={x1}
-                  y1="30"
-                  x2={x2}
-                  y2="30"
-                  stroke={riskColors[seg.risco]}
-                  strokeWidth={isSelected || isHovered ? 3 : 2}
-                  className={cn(
-                    'cursor-pointer transition-all',
-                    seg.risco === 'CRITICO' && 'animate-pulse-critical'
-                  )}
-                  onMouseEnter={() => setHoveredSegment(seg)}
-                  onMouseLeave={() => setHoveredSegment(null)}
-                  onClick={() => {
-                    const alerta = findAlertaForSegment(seg);
+              <Polyline
+                key={seg.id}
+                positions={coordinates}
+                pathOptions={{
+                  color: riskColors[seg.risco],
+                  weight: isSelected ? 6 : 4,
+                  opacity: isSelected ? 1 : 0.8,
+                  className: seg.risco === 'CRITICO' ? 'animate-pulse-critical' : '',
+                }}
+                eventHandlers={{
+                  click: () => {
                     if (alerta) {
                       onSelectSegment(alerta);
                     }
-                  }}
-                />
-                {/* Selection indicator */}
-                {isSelected && (
-                  <circle
-                    cx={(x1 + x2) / 2}
-                    cy="30"
-                    r="2"
-                    fill="white"
-                  />
-                )}
-              </g>
+                  },
+                }}
+              >
+                <Popup className="custom-popup">
+                  <div className="bg-card p-3 rounded-lg border border-border min-w-[200px]">
+                    <p className="font-mono text-sm font-semibold text-foreground mb-2">
+                      KM {seg.km_ini}–{seg.km_fim}
+                    </p>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">TTC:</span>
+                        <TtcBadge value={seg.ttc} size="sm" />
+                      </div>
+                      {alerta && (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">CHM:</span>
+                            <span className="font-mono">{alerta.chm} m</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Espécie:</span>
+                            <span className="text-xs truncate max-w-[100px]">{alerta.especie}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </Popup>
+              </Polyline>
             );
           })}
 
-          {/* KM markers */}
-          {[0, 100, 200, 300, 400, 500, 600, 700, 847].map((km) => (
-            <g key={km}>
-              <line
-                x1={5 + getSegmentX(km) * 0.9}
-                y1="35"
-                x2={5 + getSegmentX(km) * 0.9}
-                y2="38"
-                stroke="hsl(214 14% 58%)"
-                strokeWidth="0.3"
-              />
-              <text
-                x={5 + getSegmentX(km) * 0.9}
-                y="42"
-                textAnchor="middle"
-                fill="hsl(214 14% 58%)"
-                fontSize="2.5"
-                fontFamily="JetBrains Mono"
-              >
-                {km}
-              </text>
-            </g>
-          ))}
-
-          {/* Legend */}
-          <text x="5" y="55" fill="hsl(214 14% 58%)" fontSize="2" fontFamily="JetBrains Mono">
-            KM
-          </text>
-        </svg>
-
-        {/* Hover Tooltip */}
-        {hoveredSegment && (
-          <div
-            className="absolute bg-card border border-border rounded-lg p-3 shadow-lg pointer-events-none z-10"
-            style={{
-              left: `${5 + getSegmentX((hoveredSegment.km_ini + hoveredSegment.km_fim) / 2) * 0.9}%`,
-              top: '15%',
-              transform: 'translateX(-50%)',
+          {/* Main transmission line background */}
+          <Polyline
+            positions={[start, end]}
+            pathOptions={{
+              color: '#30363D',
+              weight: 2,
+              opacity: 0.5,
+              dashArray: '10, 10',
             }}
-          >
-            <p className="font-mono text-sm font-semibold">
-              KM {hoveredSegment.km_ini}–{hoveredSegment.km_fim}
-            </p>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-muted-foreground">TTC:</span>
-              <TtcBadge value={hoveredSegment.ttc} size="sm" />
-            </div>
-          </div>
-        )}
+          />
+        </MapContainer>
       </div>
 
       {/* Map Legend */}
